@@ -94,6 +94,21 @@ async function run() {
       res.send(result)
     })
 
+    app.put('/bidrequest/:id', async(req, res)=>{
+      const status = req.body
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert: true}
+      const updatedoc ={
+        $set: {
+          status: status.status,
+          buyer_status: status.buyer_status
+        }
+      }
+      const result = await bidCollection.updateOne(filter, updatedoc, options)
+      res.send(result)
+    })
+
     // post apis
     app.post('/bids', async(req, res)=>{
       const job = req.body
