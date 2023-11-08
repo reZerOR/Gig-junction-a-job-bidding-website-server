@@ -49,6 +49,14 @@ async function run() {
       const result = await jobCollection.findOne(query)
       res.send(result)
     })
+    app.get('/mypostedjobs/:email', async(req, res)=> {
+      const email = req.params.email
+      console.log(email)
+      const query = {buyer_email: email}
+
+      const result = await jobCollection.find(query).toArray()
+      res.send(result)
+    })
 
     // post apis
     app.post('/bids', async(req, res)=>{
