@@ -63,6 +63,12 @@ async function run() {
       const result = await bidCollection.find(query).toArray()
       res.send(result)
     })
+    app.get('/bidrequest', async(req, res) => {
+      const email = req.query.email
+      const query = {buyer_email: email}
+      const result = await bidCollection.find(query).toArray()
+      res.send(result)
+    })
 
 
     // put apis
