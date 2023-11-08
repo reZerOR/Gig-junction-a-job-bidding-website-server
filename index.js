@@ -57,6 +57,12 @@ async function run() {
       const result = await jobCollection.find(query).toArray()
       res.send(result)
     })
+    app.get('/bids', async(req, res)=> {
+      const email = req.query.email
+      const query = {email: email}
+      const result = await bidCollection.find(query).toArray()
+      res.send(result)
+    })
 
 
     // put apis
