@@ -1,13 +1,40 @@
 const express = require('express');
 const cors = require('cors');
 const app = express()
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
 // middle ware
-app.use(cors())
+app.use(cors({
+      origin: [
+        // 'http://localhost:5173'
+        'https://gigjunction-f7c2d.web.app',
+        "https://gigjunction-f7c2d.firebaseapp.com"
+
+    ],
+    credentials: true
+}))
 app.use(express.json())
+app.use(cookieParser());
+
+
+// verify token 
+const verifyToken = (req, res, next) =>{
+    const token = req?.cookies?.token;
+    if(!token){
+        return res.status(401).send({message: 'unauthorized access'})
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) =>{
+        if(err){
+            return res.status(401).send({message: 'unauthorized access'})
+        }
+        req.user = decoded;
+        next();
+    })
+}
 
 
 
@@ -28,10 +55,31 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const jobCollection = client.db('gigJunctionDB').collection('jobs')
     const bidCollection = client.db('gigJunctionDB').collection('bids')
+
+
+
+    // jwt token api
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+        console.log('user for token', user);
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      })
+      .send({ success: true });
+    })
+    app.post('/logout', async (req, res) => {
+      const user = req.body;
+      console.log('logging out', user);
+      res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+    })
 
 
     // apis
@@ -49,23 +97,44 @@ async function run() {
       const result = await jobCollection.findOne(query)
       res.send(result)
     })
-    app.get('/mypostedjobs/:email', async(req, res)=> {
+    app.get('/mypostedjobs/:email', verifyToken, async(req, res)=> {
       const email = req.params.email
+      console.log('token owner info', req.user)
       console.log(email)
-      const query = {buyer_email: email}
+      if(req.user.email !== email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      let query = {};
+      if (email) {
+       query = {buyer_email: email}
+      }
 
       const result = await jobCollection.find(query).toArray()
       res.send(result)
     })
-    app.get('/bids', async(req, res)=> {
+    app.get('/bids', verifyToken, async(req, res)=> {
       const email = req.query.email
-      const query = {email: email}
-      const result = await bidCollection.find(query).toArray()
+      console.log('token owner info', req.user)
+      if(req.user.email !== email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      let query = {};
+      if (email) {
+       query = {email: email}
+      }
+      const result = await bidCollection.find(query).sort({"status": 1}).toArray()
       res.send(result)
     })
-    app.get('/bidrequest', async(req, res) => {
+    app.get('/bidrequest', verifyToken, async(req, res) => {
       const email = req.query.email
-      const query = {buyer_email: email}
+      console.log('token owner info', req.user)
+      if(req.user.email !== email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      let query = {};
+      if (email) {
+       query = {buyer_email: email}
+      }
       const result = await bidCollection.find(query).toArray()
       res.send(result)
     })
