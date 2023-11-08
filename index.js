@@ -63,7 +63,23 @@ async function run() {
     app.put('/updatejob/:id', async(req, res) => {
       const job = req.body
       const id = req.params.id
-      console.log(job, id)
+      const filter= {_id: new ObjectId(id)}
+      const options = {
+        upsert: true
+      };
+      const updatedoc= {
+        $set: {
+          img: job.img,
+          job_title: job.job_title,
+          min_price: job.min_price,
+          max_price: job.max_price,
+          category: job.category,
+          deadline: job.deadline,
+          description: job.description
+        }
+      }
+      const result = await jobCollection.updateOne(filter, updatedoc, options)
+      res.send(result)
     })
 
     // post apis
