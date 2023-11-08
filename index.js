@@ -58,6 +58,14 @@ async function run() {
       res.send(result)
     })
 
+
+    // put apis
+    app.put('/updatejob/:id', async(req, res) => {
+      const job = req.body
+      const id = req.params.id
+      console.log(job, id)
+    })
+
     // post apis
     app.post('/bids', async(req, res)=>{
       const job = req.body
