@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 // middle ware
 app.use(cors({
       origin: [
-        // 'http://localhost:5173'
+        'http://localhost:5173',
         'https://gigjunction-f7c2d.web.app',
         "https://gigjunction-f7c2d.firebaseapp.com"
 
@@ -99,6 +99,7 @@ async function run() {
     })
     app.get('/mypostedjobs/:email', verifyToken, async(req, res)=> {
       const email = req.params.email
+      const {category} = req.query
       console.log('token owner info', req.user)
       console.log(email)
       if(req.user.email !== email){
@@ -107,6 +108,9 @@ async function run() {
       let query = {};
       if (email) {
        query = {buyer_email: email}
+       if(category){
+        query.category = category
+       }
       }
 
       const result = await jobCollection.find(query).toArray()
